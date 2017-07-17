@@ -7,6 +7,7 @@ from BidirectionalLSTM import BidirectionalLSTM
 from Classifier import Classifier
 from DistanceNetwork import DistanceNetwork
 from AttentionalClassify import AttentionalClassify
+import torch.nn.functional as F
 
 class MatchingNetwork(nn.Module):
     def __init__(self, keep_prob, \
@@ -40,19 +41,19 @@ class MatchingNetwork(nn.Module):
         self.num_samples_per_class = num_samples_per_class
         self.learning_rate = learning_rate
 
-    def forward(self, support_set_images, support_set_labels, target_image, target_label):
+    def forward(self, support_set_images, support_set_labels_one_hot, target_image, target_label):
         """
         Builds graph for Matching Networks, produces losses and summary statistics.
-        :param support_set_images: A tensor containing the support set images [sequence_size, batch_size, 28, 28, 1]
-        :param support_set_labels: A tensor containing the support set labels [sequence_size, batch_size, 1]
-        :param target_image: A tensor containing the target image (image to produce label for) [batch_size, 28, 28, 1]
+        :param support_set_images: A tensor containing the support set images [batch_size, sequence_size, n_channels, 28, 28]
+        :param support_set_labels_one_hot: A tensor containing the support set labels [batch_size, sequence_size, n_classes]
+        :param target_image: A tensor containing the target image (image to produce label for) [batch_size, n_channels, 28, 28]
         :param target_label: A tensor containing the target label [batch_size, 1]
         :return: 
         """
         # produce embeddings for support set images
         encoded_images = []
-        for image in support_set_images:
-            gen_encode = self.g(image)
+        for i in np.arange(support_set_images.size(1)):
+            gen_encode = self.g(support_set_images[:,i,:,:])
             encoded_images.append(gen_encode)
 
         # produce embeddings for target images
@@ -65,18 +66,21 @@ class MatchingNetwork(nn.Module):
 
         # get similarity between support set embeddings and target
         similarities = self.dn(support_set=outputs[:-1], input_image=outputs[-1])
+        similarities = similarities.t()
 
         # produce predictions for target probabilities
-        preds = self.classify(similarities,support_set_y=support_set_labels)
+        preds = self.classify(similarities,support_set_y=support_set_labels_one_hot)
 
         #
         values, indices = preds.max(1)
-        values, indices = torch.max(tensor, 0)
-        values, indices = tensor.max(preds,1)
-        correct_prediction = tf.equal(tf.argmax(preds, 1), tf.cast(self.target_label, tf.int64))
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-        crossentropy_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.target_label,
-                                                                                          logits=preds))
+        #correct_prediction = (indices.squeeze() == target_label).float()
+        accuracy = torch.mean((indices.squeeze() == target_label).float())
+        #nn.BCELoss()(nn.Sigmoid()(preds), target_label)
+        #torch.nn.BCEWithLogitsLoss(preds, target_label)
+        #F.binary_cross_entropy(preds, target_label)
+        #torch.nn.MultiLabelSoftMarginLoss()(target_label,preds)
+        #crossentropy_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.target_label,
+        #                                                                                  logits=preds))
 
         a = 0
 
@@ -107,27 +111,22 @@ class MatchingNetworkTest(unittest.TestCase):
 
     def test_forward(self):
         sequence_size = self.classes_per_set * self.samples_per_class
-        support_set_images = Variable(torch.FloatTensor(sequence_size, self.batch_size, self.channels, 28, 28),
+        support_set_images = Variable(torch.FloatTensor(self.batch_size, sequence_size, self.channels, 28, 28),
                                            requires_grad=True)
-        support_set_labels = Variable(torch.LongTensor(sequence_size, self.batch_size).random_() % self.classes_per_set, requires_grad=True)
-        # Create one_hot vectors for support_set_labels
-        sequence_length = support_set_labels.size()[0]
-        batch_size = support_set_labels.size()[1]
-        num_classes = 20
-        support_set_labels_onehot = []
-        for labels in support_set_labels:
-            temp_onehot = torch.FloatTensor(batch_size, num_classes)
-            temp_onehot.zero_()
-            temp_onehot.scatter_(1, labels.view(-1, 1).data, 1)
-            support_set_labels_onehot.append(temp_onehot)
-        support_set_labels_onehot = torch.stack(support_set_labels_onehot)
-        support_set_labels = Variable(support_set_labels_onehot,requires_grad=True)
+        support_set_labels = Variable(torch.LongTensor(self.batch_size, sequence_size).random_() % self.classes_per_set, requires_grad=False)
 
+        # Add extra dimension for the one_hot to support_set_labels
+        support_set_labels = torch.unsqueeze(support_set_labels, 2)
+        sequence_length = support_set_labels.size()[1]
+        batch_size = support_set_labels.size()[0]
+        support_set_labels_one_hot = torch.FloatTensor(self.batch_size, sequence_length, self.classes_per_set).zero_()
+        support_set_labels_one_hot.scatter_(2, support_set_labels.data, 1)
+        support_set_labels_one_hot = Variable(support_set_labels_one_hot, requires_grad=True)
 
         #self.support_set_labels = tf.one_hot(self.support_set_labels, self.num_classes_per_set)  # one hot encode
         target_image = Variable(torch.FloatTensor(self.batch_size, self.channels, 28, 28), requires_grad=True)
         target_label = Variable(torch.LongTensor(self.batch_size).random_() % self.classes_per_set, requires_grad=True)
-        self.matchingNet(support_set_images, support_set_labels, target_image, target_label)
+        self.matchingNet(support_set_images, support_set_labels_one_hot, target_image, target_label)
         self.assertEqual(0, 0)
 
 if __name__ == '__main__':
