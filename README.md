@@ -1,6 +1,8 @@
 # MatchingNetworks Pytorch Implementation
 This repo provides code that replicated the results of the Matching Networks for One Shot Learning paper on the Omniglot dataset.
 
+WORK IN PROCESS!
+
 # Training a model
 
 # Features
