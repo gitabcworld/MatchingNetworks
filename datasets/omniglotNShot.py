@@ -1,7 +1,7 @@
 from datasets import omniglot
 import torchvision.transforms as transforms
 from PIL import Image
-from option import Options
+#from option import Options
 import os.path
 
 import numpy as np
@@ -13,12 +13,11 @@ PiLImageResize = lambda x: x.resize((28,28))
 np_reshape = lambda x: np.reshape(x, (28, 28, 1))
 
 class OmniglotNShotDataset():
-    def __init__(self, batch_size = 100, classes_per_set=10, samples_per_class=1):
+    def __init__(self, dataroot, batch_size = 100, classes_per_set=10, samples_per_class=1):
 
-        args = Options().parse()
-
-        if not os.path.isfile(os.path.join(args.dataroot,'data.npy')):
-            self.x = omniglot.OMNIGLOT(args.dataroot, download=True,
+        #args = Options().parse()
+        if not os.path.isfile(os.path.join(dataroot,'data.npy')):
+            self.x = omniglot.OMNIGLOT(dataroot, download=True,
                                      transform=transforms.Compose([filenameToPILImage,
                                                                    PiLImageResize,
                                                                    np_reshape]))
@@ -39,9 +38,9 @@ class OmniglotNShotDataset():
                 self.x.append(np.array(temp[temp.keys()[classes]]))
             self.x = np.array(self.x)
             temp = [] # Free memory
-            np.save(os.path.join(args.dataroot,'data.npy'),self.x)
+            np.save(os.path.join(dataroot,'data.npy'),self.x)
         else:
-            self.x = np.load(os.path.join(args.dataroot,'data.npy'))
+            self.x = np.load(os.path.join(dataroot,'data.npy'))
 
         """
         Constructs an N-Shot omniglot Dataset
@@ -119,7 +118,7 @@ class OmniglotNShotDataset():
             data_cache.append([support_set_x, support_set_y, target_x, target_y])
         return data_cache
 
-    def get_batch(self, dataset_name):
+    def __get_batch(self, dataset_name):
         """
         Gets next batch from the dataset with name.
         :param dataset_name: The name of the dataset (one of "train", "val", "test")
@@ -133,26 +132,38 @@ class OmniglotNShotDataset():
         x_support_set, y_support_set, x_target, y_target = next_batch
         return x_support_set, y_support_set, x_target, y_target
 
-    def get_train_batch(self):
+    def get_batch(self,str_type, rotate_flag = False):
 
         """
-        Get next training batch
-        :return: Next training batch
+        Get next batch
+        :return: Next batch
         """
-        return self.get_batch("train")
+        x_support_set, y_support_set, x_target, y_target = self.__get_batch(str_type)
+        if rotate_flag:
+            # Iterate over the sequence. Extract batches.
+            for i in np.arange(x_support_set.shape[1]):
+                x_support_set[:,i,:,:,:] = self.__rotate_batch(x_support_set[:,i,:,:,:])
+            a = 0
+        return x_support_set, y_support_set, x_target, y_target
 
-    def get_test_batch(self):
 
+    def __rotate_data(self, image, k):
         """
-        Get next test batch
-        :return: Next test_batch
+        Rotates one image by self.k * 90 degrees
+        :param image: Image to rotate
+        :return: Rotated Image
         """
-        return self.get_batch("test")
+        return np.rot90(image, k)
 
-    def get_val_batch(self):
 
+    def __rotate_batch(self, batch_images):
         """
-        Get next val batch
-        :return: Next val batch
+        Rotates a whole image batch
+        :param batch_images: A batch of images
+        :return: The rotated batch of images
         """
-        return self.get_batch("val")
+        batch_size, x, y, c = batch_images.shape
+        k = int(np.random.uniform(low=0, high=4))
+        for i in np.arange(batch_size):
+            batch_images[i,:,:,:] = self.__rotate_data(batch_images[i,:,:,:],k)
+        return batch_images

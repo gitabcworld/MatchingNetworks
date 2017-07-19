@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 class MatchingNetwork(nn.Module):
     def __init__(self, keep_prob, \
-                 batch_size=100, num_channels=1, is_training=False, learning_rate=0.001, rotate_flag=False, fce=False, num_classes_per_set=5, \
+                 batch_size=100, num_channels=1, learning_rate=0.001, fce=False, num_classes_per_set=5, \
                  num_samples_per_class=1):
         super(MatchingNetwork, self).__init__()
 
@@ -28,15 +28,12 @@ class MatchingNetwork(nn.Module):
         """
         self.batch_size = batch_size
         self.fce = fce
-        self.g = Classifier(layer_sizes=[64, 64, 64 ,64], num_channels=num_channels, )
+        self.g = Classifier(layer_sizes=[64, 64, 64 ,64], num_channels=num_channels )
         if fce:
             self.lstm = BidirectionalLSTM(layer_sizes=[32], batch_size=self.batch_size, vector_dim = 64)
         self.dn = DistanceNetwork()
         self.classify = AttentionalClassify()
         self.keep_prob = keep_prob
-        self.is_training = is_training
-        self.k = None
-        self.rotate_flag = rotate_flag
         self.num_classes_per_set = num_classes_per_set
         self.num_samples_per_class = num_samples_per_class
         self.learning_rate = learning_rate
@@ -71,18 +68,12 @@ class MatchingNetwork(nn.Module):
         # produce predictions for target probabilities
         preds = self.classify(similarities,support_set_y=support_set_labels_one_hot)
 
-        #
+        # calculate accuracy and crossentropy loss
         values, indices = preds.max(1)
-        #correct_prediction = (indices.squeeze() == target_label).float()
         accuracy = torch.mean((indices.squeeze() == target_label).float())
-        #nn.BCELoss()(nn.Sigmoid()(preds), target_label)
-        #torch.nn.BCEWithLogitsLoss(preds, target_label)
-        #F.binary_cross_entropy(preds, target_label)
-        #torch.nn.MultiLabelSoftMarginLoss()(target_label,preds)
-        #crossentropy_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.target_label,
-        #                                                                                  logits=preds))
+        crossentropy_loss = F.cross_entropy(preds, target_label.long())
 
-        a = 0
+        return accuracy, crossentropy_loss
 
 
 class MatchingNetworkTest(unittest.TestCase):
@@ -101,13 +92,27 @@ class MatchingNetworkTest(unittest.TestCase):
         self.learning_rate = Variable(torch.FloatTensor(1), requires_grad=True)
         self.matchingNet = MatchingNetwork(batch_size=self.batch_size,
                                                  keep_prob=self.keep_prob, num_channels=self.channels,
-                                                 is_training=self.training_phase, fce=self.fce, rotate_flag=self.rotate_flag,
+                                                 fce=self.fce,
                                                  num_classes_per_set=self.classes_per_set,
-                                                 num_samples_per_class=self.samples_per_class,
-                                                 learning_rate=self.learning_rate)
+                                                 num_samples_per_class=self.samples_per_class)
 
     def tearDown(self):
         pass
+
+    def test_accuracy(self):
+        preds = np.load('/home/aberenguel/pytorch/examples/MatchingNetworks/data/cross_entropy_loss/preds.npy')
+        target_label = np.load('/home/aberenguel/pytorch/examples/MatchingNetworks/data/cross_entropy_loss/target_label.npy')
+        accuracy = np.load('/home/aberenguel/pytorch/examples/MatchingNetworks/data/cross_entropy_loss/accuracy.npy')
+        cross_entropy = np.load('/home/aberenguel/pytorch/examples/MatchingNetworks/data/cross_entropy_loss/cross_entropy.npy')
+        preds = Variable(torch.from_numpy(preds), requires_grad=False)
+        target_label = Variable(torch.from_numpy(target_label), requires_grad=False)
+        values, indices = preds.max(1)
+        # correct_prediction = (indices.squeeze() == target_label).float()
+        res_accuracy = torch.mean((indices.squeeze() == target_label.long()).float())
+        self.assertEqual(res_accuracy.data.numpy(),accuracy,'Accuracy Equal')
+        res_cross_entropy = F.cross_entropy(preds, target_label.long())
+        self.assertAlmostEquals(res_cross_entropy.data.numpy(), cross_entropy, 5)
+
 
     def test_forward(self):
         sequence_size = self.classes_per_set * self.samples_per_class
@@ -125,7 +130,7 @@ class MatchingNetworkTest(unittest.TestCase):
 
         #self.support_set_labels = tf.one_hot(self.support_set_labels, self.num_classes_per_set)  # one hot encode
         target_image = Variable(torch.FloatTensor(self.batch_size, self.channels, 28, 28), requires_grad=True)
-        target_label = Variable(torch.LongTensor(self.batch_size).random_() % self.classes_per_set, requires_grad=True)
+        target_label = Variable(torch.LongTensor(self.batch_size).random_() % self.classes_per_set, requires_grad=False)
         self.matchingNet(support_set_images, support_set_labels_one_hot, target_image, target_label)
         self.assertEqual(0, 0)
 

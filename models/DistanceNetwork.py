@@ -23,9 +23,10 @@ class DistanceNetwork(nn.Module):
         similarities = []
         for support_image in support_set:
             sum_support = torch.sum(torch.pow(support_image, 2), 1)
-            # TODO: Check this variable clipped. Backwards problem??
-            sum_support_clipped = Variable(torch.from_numpy(sum_support.data.numpy().clip(eps, float("inf"))), requires_grad=True)
-            support_magnitude = torch.rsqrt(sum_support_clipped)
+            #sum_support_clipped = torch.clamp(sum_support, eps, float("inf"))
+            #sum_support_clipped = Variable(torch.from_numpy(sum_support.data.numpy().clip(eps, float("inf"))))
+            #support_magnitude = torch.rsqrt(sum_support_clipped)
+            support_magnitude = sum_support.clamp(eps, float("inf")).rsqrt()
             dot_product = input_image.unsqueeze(1).bmm(support_image.unsqueeze(2)).squeeze()
             cosine_similarity = dot_product * support_magnitude
             similarities.append(cosine_similarity)

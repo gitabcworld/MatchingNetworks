@@ -39,9 +39,9 @@ class BidirectionalLSTM(nn.Module):
         :return: Returns the LSTM outputs, as well as the forward and backward hidden states.
         """
         c0 = Variable(torch.rand(self.lstm.num_layers*2, self.batch_size, self.lstm.hidden_size),
-                      requires_grad=False)
+                      requires_grad=False).cuda()
         h0 = Variable(torch.rand(self.lstm.num_layers*2, self.batch_size, self.lstm.hidden_size),
-                      requires_grad=False)
+                      requires_grad=False).cuda()
         output, (hn, cn) = self.lstm(inputs, (h0, c0))
         return output, hn, cn
 

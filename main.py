@@ -13,34 +13,30 @@ from option import Options
 
 #Dummy test
 import torch
-from torch.autograd import Variable
 import torch.nn as nn
+from torch.autograd import Variable
+from experiments.OneShotBuilder import OneShotBuilder
 
-#args = Options().parse()
-#a = omniglotNShot.OmniglotNShotDataset()
-
-from models.BidirectionalLSTM import BidirectionalLSTM
-
-'''
-#Function to make dummy data.
-def datagen(batch_size, seq_length,  vector_dim):
-    return torch.rand(seq_length, batch_size,  vector_dim)
-
-samples = 100000
+# Experiment Setup
 batch_size = 32
-sequence_len = 20
-vector_dim = 64
-layer_sizes = [100, 100, 100]
+fce = True
+classes_per_set = 20
+samples_per_class = 1
+channels = 1
+epochs = 200
+logs_path = "one_shot_outputs/"
+experiment_name = "one_shot_learning_embedding_{}_{}".format(samples_per_class, classes_per_set)
 
-lstm = BidirectionalLSTM(layer_sizes = layer_sizes, batch_size = batch_size, vector_dim = 64).cuda()
+total_epochs = 300
+total_train_batches = 1000
+total_val_batches = 100
+total_test_batches = 250
 
-for sample in range(samples):
-
-    input = Variable(datagen(batch_size, sequence_len, vector_dim).cuda(), requires_grad = True)
-    hidden, output = lstm(input)
-
-
-b = 0
-'''
-
+args = Options().parse()
+data = omniglotNShot.OmniglotNShotDataset(dataroot=args.dataroot, batch_size = batch_size,
+                                          classes_per_set=classes_per_set,
+                                          samples_per_class=samples_per_class)
+obj_oneShotBuilder = OneShotBuilder(data)
+obj_oneShotBuilder.build_experiment(batch_size, classes_per_set, samples_per_class, channels, fce)
+obj_oneShotBuilder.run_training_epoch(total_train_batches)
 
