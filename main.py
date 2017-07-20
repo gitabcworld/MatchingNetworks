@@ -7,16 +7,11 @@
 ## This source code is licensed under the MIT-style license found in the
 ## LICENSE file in the root directory of this source tree
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 from datasets import omniglotNShot
 from option import Options
-
-#Dummy test
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
 from experiments.OneShotBuilder import OneShotBuilder
 import tqdm
+from logger import Logger
 
 # Experiment Setup
 batch_size = 32
@@ -24,16 +19,21 @@ fce = True
 classes_per_set = 20
 samples_per_class = 1
 channels = 1
-epochs = 200
-logs_path = "one_shot_outputs/"
-experiment_name = "one_shot_learning_embedding_{}_{}".format(samples_per_class, classes_per_set)
-
+# Training setup
 total_epochs = 300
 total_train_batches = 1000
 total_val_batches = 100
 total_test_batches = 250
-
+# Parse other options
 args = Options().parse()
+
+LOG_DIR = args.log_dir + '/run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
+    .format(batch_size,fce,classes_per_set,samples_per_class,channels)
+
+# create logger
+logger = Logger(LOG_DIR)
+
+
 data = omniglotNShot.OmniglotNShotDataset(dataroot=args.dataroot, batch_size = batch_size,
                                           classes_per_set=classes_per_set,
                                           samples_per_class=samples_per_class)
@@ -50,13 +50,21 @@ with tqdm.tqdm(total=total_epochs) as pbar_e:
             total_val_batches=total_val_batches)
         print("Epoch {}: val_loss: {}, val_accuracy: {}".format(e, total_val_c_loss, total_val_accuracy))
 
+        logger.log_value('train_loss', total_c_loss)
+        logger.log_value('train_acc', total_accuracy)
+        logger.log_value('val_loss', total_val_c_loss)
+        logger.log_value('val_acc', total_val_accuracy)
+
         if total_val_accuracy >= best_val:  # if new best val accuracy -> produce test statistics
             best_val = total_val_accuracy
             total_test_c_loss, total_test_accuracy = obj_oneShotBuilder.run_testing_epoch(
                 total_test_batches=total_test_batches)
             print("Epoch {}: test_loss: {}, test_accuracy: {}".format(e, total_test_c_loss, total_test_accuracy))
+            logger.log_value('test_loss', total_test_c_loss)
+            logger.log_value('test_acc', total_test_accuracy)
         else:
             total_test_c_loss = -1
             total_test_accuracy = -1
 
         pbar_e.update(1)
+        logger.step()

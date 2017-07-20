@@ -1,4 +1,5 @@
 import torch
+import torch.backends.cudnn as cudnn
 import tqdm
 from models.MatchingNetwork import MatchingNetwork
 from torch.autograd import Variable
@@ -38,7 +39,11 @@ class OneShotBuilder:
         self.current_lr = 1e-03
         self.lr_decay = 1e-6
         self.wd = 1e-4
-        self.matchingNet.cuda()
+        self.isCudaAvailable = torch.cuda.is_available()
+        if self.isCudaAvailable:
+            cudnn.benchmark = True
+            torch.cuda.manual_seed_all(0)
+            self.matchingNet.cuda()
 
     def run_training_epoch(self, total_train_batches):
         """
@@ -75,7 +80,12 @@ class OneShotBuilder:
                 x_support_set = x_support_set.view(size[0],size[1],size[4],size[2],size[3])
                 size = x_target.size()
                 x_target = x_target.view(size[0], size[3], size[1], size[2])
-                acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(), x_target.cuda(), y_target.cuda())
+                if self.isCudaAvailable:
+                    acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
+                                                         x_target.cuda(), y_target.cuda())
+                else:
+                    acc, c_loss_value = self.matchingNet(x_support_set, y_support_set_one_hot,
+                                                         x_target, y_target)
 
                 # Before the backward pass, use the optimizer object to zero all of the
                 # gradients for the variables it will update (which are the learnable weights
@@ -122,10 +132,10 @@ class OneShotBuilder:
                 x_support_set, y_support_set, x_target, y_target = \
                     self.data.get_batch(str_type='val', rotate_flag=False)
 
-                x_support_set = Variable(torch.from_numpy(x_support_set), requires_grad=False).float()
-                y_support_set = Variable(torch.from_numpy(y_support_set), requires_grad=False).long()
-                x_target = Variable(torch.from_numpy(x_target), requires_grad=False).float()
-                y_target = Variable(torch.from_numpy(y_target), requires_grad=False).long()
+                x_support_set = Variable(torch.from_numpy(x_support_set), volatile=True).float()
+                y_support_set = Variable(torch.from_numpy(y_support_set), volatile=True).long()
+                x_target = Variable(torch.from_numpy(x_target), volatile=True).float()
+                y_target = Variable(torch.from_numpy(y_target), volatile=True).long()
 
                 # y_support_set: Add extra dimension for the one_hot
                 y_support_set = torch.unsqueeze(y_support_set, 2)
@@ -141,8 +151,12 @@ class OneShotBuilder:
                 x_support_set = x_support_set.view(size[0], size[1], size[4], size[2], size[3])
                 size = x_target.size()
                 x_target = x_target.view(size[0], size[3], size[1], size[2])
-                acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
-                                                     x_target.cuda(), y_target.cuda())
+                if self.isCudaAvailable:
+                    acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
+                                                         x_target.cuda(), y_target.cuda())
+                else:
+                    acc, c_loss_value = self.matchingNet(x_support_set, y_support_set_one_hot,
+                                                         x_target, y_target)
 
                 iter_out = "val_loss: {}, val_accuracy: {}".format(c_loss_value.data[0], acc.data[0])
                 pbar.set_description(iter_out)
@@ -170,10 +184,10 @@ class OneShotBuilder:
                 x_support_set, y_support_set, x_target, y_target = \
                     self.data.get_batch(str_type='test', rotate_flag=False)
 
-                x_support_set = Variable(torch.from_numpy(x_support_set), requires_grad=False).float()
-                y_support_set = Variable(torch.from_numpy(y_support_set), requires_grad=False).long()
-                x_target = Variable(torch.from_numpy(x_target), requires_grad=False).float()
-                y_target = Variable(torch.from_numpy(y_target), requires_grad=False).long()
+                x_support_set = Variable(torch.from_numpy(x_support_set), volatile=True).float()
+                y_support_set = Variable(torch.from_numpy(y_support_set), volatile=True).long()
+                x_target = Variable(torch.from_numpy(x_target), volatile=True).float()
+                y_target = Variable(torch.from_numpy(y_target), volatile=True).long()
 
                 # y_support_set: Add extra dimension for the one_hot
                 y_support_set = torch.unsqueeze(y_support_set, 2)
@@ -189,8 +203,12 @@ class OneShotBuilder:
                 x_support_set = x_support_set.view(size[0], size[1], size[4], size[2], size[3])
                 size = x_target.size()
                 x_target = x_target.view(size[0], size[3], size[1], size[2])
-                acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
-                                                     x_target.cuda(), y_target.cuda())
+                if self.isCudaAvailable:
+                    acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
+                                                         x_target.cuda(), y_target.cuda())
+                else:
+                    acc, c_loss_value = self.matchingNet(x_support_set, y_support_set_one_hot,
+                                                         x_target, y_target)
 
                 iter_out = "test_loss: {}, test_accuracy: {}".format(c_loss_value.data[0], acc.data[0])
                 pbar.set_description(iter_out)
