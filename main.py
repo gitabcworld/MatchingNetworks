@@ -15,19 +15,19 @@ from logger import Logger
 
 # Experiment Setup
 batch_size = 32
-fce = True
+fce = False
 classes_per_set = 20
 samples_per_class = 1
 channels = 1
 # Training setup
-total_epochs = 300
+total_epochs = 500
 total_train_batches = 1000
 total_val_batches = 100
 total_test_batches = 250
 # Parse other options
 args = Options().parse()
 
-LOG_DIR = args.log_dir + '/run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
+LOG_DIR = args.log_dir + '/3_run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
     .format(batch_size,fce,classes_per_set,samples_per_class,channels)
 
 # create logger

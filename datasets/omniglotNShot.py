@@ -41,6 +41,9 @@ class OmniglotNShotDataset():
             np.save(os.path.join(dataroot,'data.npy'),self.x)
         else:
             self.x = np.load(os.path.join(dataroot,'data.npy'))
+            # LOAD TENSORFLOW DATA IMPLEMENTATION
+            #self.x = np.load('/home/aberenguel/TensorFlow/MatchingNetworks/data.npy')
+            #self.x = np.reshape(self.x, [-1, 20, 28, 28, 1])
 
         """
         Constructs an N-Shot omniglot Dataset
