@@ -1,7 +1,6 @@
 from datasets import omniglot
 import torchvision.transforms as transforms
 from PIL import Image
-#from option import Options
 import os.path
 
 import numpy as np
@@ -15,13 +14,11 @@ np_reshape = lambda x: np.reshape(x, (28, 28, 1))
 class OmniglotNShotDataset():
     def __init__(self, dataroot, batch_size = 100, classes_per_set=10, samples_per_class=1):
 
-        #args = Options().parse()
         if not os.path.isfile(os.path.join(dataroot,'data.npy')):
             self.x = omniglot.OMNIGLOT(dataroot, download=True,
                                      transform=transforms.Compose([filenameToPILImage,
                                                                    PiLImageResize,
                                                                    np_reshape]))
-                                                                   #transforms.ToTensor()]))
 
             """
             # Convert to the format of AntreasAntoniou. Format [nClasses,nCharacters,28,28,1]
@@ -41,9 +38,6 @@ class OmniglotNShotDataset():
             np.save(os.path.join(dataroot,'data.npy'),self.x)
         else:
             self.x = np.load(os.path.join(dataroot,'data.npy'))
-            # LOAD TENSORFLOW DATA IMPLEMENTATION
-            #self.x = np.load('/home/aberenguel/TensorFlow/MatchingNetworks/data.npy')
-            #self.x = np.reshape(self.x, [-1, 20, 28, 28, 1])
 
         """
         Constructs an N-Shot omniglot Dataset
@@ -143,30 +137,33 @@ class OmniglotNShotDataset():
         """
         x_support_set, y_support_set, x_target, y_target = self.__get_batch(str_type)
         if rotate_flag:
+            k = int(np.random.uniform(low=0, high=4))
             # Iterate over the sequence. Extract batches.
             for i in np.arange(x_support_set.shape[1]):
-                x_support_set[:,i,:,:,:] = self.__rotate_batch(x_support_set[:,i,:,:,:])
-            a = 0
+                x_support_set[:,i,:,:,:] = self.__rotate_batch(x_support_set[:,i,:,:,:],k)
+            # Rotate all the batch of the target images
+            x_target = self.__rotate_batch(x_target,k)
+
         return x_support_set, y_support_set, x_target, y_target
 
 
     def __rotate_data(self, image, k):
         """
-        Rotates one image by self.k * 90 degrees
+        Rotates one image by self.k * 90 degrees counter-clockwise
         :param image: Image to rotate
         :return: Rotated Image
         """
         return np.rot90(image, k)
 
 
-    def __rotate_batch(self, batch_images):
+    def __rotate_batch(self, batch_images, k):
         """
         Rotates a whole image batch
         :param batch_images: A batch of images
+        :param k: integer degree of rotation counter-clockwise
         :return: The rotated batch of images
         """
-        batch_size, x, y, c = batch_images.shape
-        k = int(np.random.uniform(low=0, high=4))
+        batch_size = len(batch_images)
         for i in np.arange(batch_size):
-            batch_images[i,:,:,:] = self.__rotate_data(batch_images[i,:,:,:],k)
+            batch_images[i] = self.__rotate_data(batch_images[i], k)
         return batch_images

@@ -7,6 +7,7 @@
 ## This source code is licensed under the MIT-style license found in the
 ## LICENSE file in the root directory of this source tree
 ##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 from datasets import omniglotNShot
 from option import Options
 from experiments.OneShotBuilder import OneShotBuilder
@@ -27,7 +28,7 @@ total_test_batches = 250
 # Parse other options
 args = Options().parse()
 
-LOG_DIR = args.log_dir + '/3_run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
+LOG_DIR = args.log_dir + '/2_run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
     .format(batch_size,fce,classes_per_set,samples_per_class,channels)
 
 # create logger

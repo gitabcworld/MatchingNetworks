@@ -25,7 +25,6 @@ class OneShotBuilder:
         :param fce: Whether to use full context embeddings or not
         :return: a matching_network object, along with the losses, the training ops and the init op
         """
-        #sequence_size = classes_per_set * samples_per_class
         self.classes_per_set = classes_per_set
         self.samples_per_class = samples_per_class
         self.keep_prob = torch.FloatTensor(1)
@@ -39,6 +38,7 @@ class OneShotBuilder:
         self.current_lr = 1e-03
         self.lr_decay = 1e-6
         self.wd = 1e-4
+        self.total_train_iter = 0
         self.isCudaAvailable = torch.cuda.is_available()
         if self.isCudaAvailable:
             cudnn.benchmark = True
@@ -108,11 +108,10 @@ class OneShotBuilder:
                 total_c_loss += c_loss_value.data[0]
                 total_accuracy += acc.data[0]
 
-                #self.total_train_iter += 1
-                #if self.total_train_iter % 2000 == 0:
-                #    self.current_learning_rate /= 2
-                #    print("change learning rate", self.current_learning_rate)
-                #    optimizer.__setattr__()
+                self.total_train_iter += 1
+                if self.total_train_iter % 2000 == 0:
+                    self.lr /= 2
+                    print("change learning rate", self.lr)
 
         total_c_loss = total_c_loss / total_train_batches
         total_accuracy = total_accuracy / total_train_batches
