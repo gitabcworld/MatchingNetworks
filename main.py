@@ -14,10 +14,18 @@ from experiments.OneShotBuilder import OneShotBuilder
 import tqdm
 from logger import Logger
 
+'''
+:param batch_size: Experiment batch_size
+:param classes_per_set: Integer indicating the number of classes per set
+:param samples_per_class: Integer indicating samples per class
+        e.g. For a 20-way, 1-shot learning task, use classes_per_set=20 and samples_per_class=1
+             For a 5-way, 10-shot learning task, use classes_per_set=5 and samples_per_class=10
+'''
+
 # Experiment Setup
 batch_size = 32
 fce = False
-classes_per_set = 20
+classes_per_set = 5
 samples_per_class = 1
 channels = 1
 # Training setup
@@ -28,7 +36,7 @@ total_test_batches = 250
 # Parse other options
 args = Options().parse()
 
-LOG_DIR = args.log_dir + '/2_run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
+LOG_DIR = args.log_dir + '/1_run-batchSize_{}-fce_{}-classes_per_set{}-samples_per_class{}-channels{}' \
     .format(batch_size,fce,classes_per_set,samples_per_class,channels)
 
 # create logger

@@ -1,3 +1,13 @@
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## Created by: Albert Berenguel
+## Computer Vision Center (CVC). Universitat Autonoma de Barcelona
+## Email: aberenguel@cvc.uab.es
+## Copyright (c) 2017
+##
+## This source code is licensed under the MIT-style license found in the
+## LICENSE file in the root directory of this source tree
+##+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 from datasets import omniglot
 import torchvision.transforms as transforms
 from PIL import Image
