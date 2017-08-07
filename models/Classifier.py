@@ -15,34 +15,44 @@ from torch.autograd import Variable
 import unittest
 import numpy as np
 
-def convLayer(in_planes, out_planes, stride=1, padding = 1, bias = True):
+def convLayer(in_planes, out_planes, useDropout = False):
     "3x3 convolution with padding"
-    return nn.Sequential(
+    seq = nn.Sequential(
         nn.Conv2d(in_planes, out_planes, kernel_size=3,
-                  stride=stride, padding=padding, bias=bias),
+                  stride=1, padding=1, bias=True),
         nn.BatchNorm2d(out_planes),
-        nn.LeakyReLU(0.2),
-        nn.MaxPool2d(kernel_size=2, stride=2),
-        nn.Dropout(0)
+        nn.ReLU(True),
+        nn.MaxPool2d(kernel_size=2, stride=2)
     )
+    if useDropout: # Add dropout module
+        list_seq = list(seq.modules())[1:]
+        list_seq.append(nn.Dropout(0.1))
+        seq = nn.Sequential(*list_seq)
 
+    return seq
 
 class Classifier(nn.Module):
-    def __init__(self, layer_sizes, num_channels = 1, keep_prob = 0.5):
+    def __init__(self, layer_sizes, nClasses = 0, num_channels = 1, useDropout = False):
         super(Classifier, self).__init__()
 
         """
         Builds a CNN to produce embeddings
         :param layer_sizes: A list of length 4 containing the layer sizes
+        :param nClasses: If nClasses>0, we want a FC layer at the end with nClasses size.
         :param num_channels: Number of channels of images
+        :param useDroput: use Dropout with p=0.1 in each Conv block
         """
         assert len(layer_sizes)==4, "layer_sizes should be a list of length 4"
+        self.useClassification = False
 
-        self.layer1 = convLayer(num_channels, layer_sizes[0])
-        self.layer2 = convLayer(layer_sizes[0], layer_sizes[1])
-        self.layer3 = convLayer(layer_sizes[1], layer_sizes[2])
-        self.layer4 = convLayer(layer_sizes[2], layer_sizes[3])
+        self.layer1 = convLayer(num_channels, layer_sizes[0], useDropout)
+        self.layer2 = convLayer(layer_sizes[0], layer_sizes[1], useDropout)
+        self.layer3 = convLayer(layer_sizes[1], layer_sizes[2], useDropout)
+        self.layer4 = convLayer(layer_sizes[2], layer_sizes[3], useDropout)
 
+        if nClasses>0: # We want a linear
+            self.useClassification = True
+            self.layer5 = nn.Linear(layer_sizes[3],nClasses)
 
         self.weights_init(self.layer1)
         self.weights_init(self.layer2)
@@ -70,6 +80,8 @@ class Classifier(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
         x = torch.squeeze(x)
+        if self.useClassification:
+            x = self.layer5(x)
         return x
 
 
