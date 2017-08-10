@@ -1,0 +1,4 @@
+numpy
+torchvision
+tensorboard_logger
+tqdm
