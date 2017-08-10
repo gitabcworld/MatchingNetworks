@@ -57,7 +57,7 @@ class miniImageNetBuilder:
                                          fce=fce,
                                          num_classes_per_set=classes_per_set,
                                          num_samples_per_class=samples_per_class,
-                                         nClasses = classes_per_set, image_size = 84)
+                                         nClasses = 0, image_size = 84)
         self.isCudaAvailable = torch.cuda.is_available()
         if self.isCudaAvailable:
             cudnn.benchmark = True

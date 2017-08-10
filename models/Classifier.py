@@ -48,10 +48,11 @@ class Classifier(nn.Module):
         self.layer3 = convLayer(layer_size, layer_size, useDropout)
         self.layer4 = convLayer(layer_size, layer_size, useDropout)
 
-        self.outSize = int(math.floor(image_size / (2 * 2 * 2 * 2)))
+        finalSize = int(math.floor(image_size / (2 * 2 * 2 * 2)))
+        self.outSize = finalSize * finalSize * layer_size
         if nClasses>0: # We want a linear
             self.useClassification = True
-            self.layer5 = nn.Linear(self.outSize * self.outSize * layer_size,nClasses)
+            self.layer5 = nn.Linear(self.outSize,nClasses)
             self.outSize = nClasses
         else:
             self.useClassification = False
