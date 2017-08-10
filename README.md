@@ -10,7 +10,7 @@ The experiments needs installing [Pytorch](http://pytorch.org/)
     $ python main.py
 
 ## Acknowledgements
-Special thanks to https://github.com/zergylord and https://github.com/AntreasAntoniou for their Matching Networks implementation. I intend to use some parts for this implementation. More details at https://github.com/zergylord/oneshot and https://github.com/zergylord/oneshot
+Special thanks to https://github.com/zergylord and https://github.com/AntreasAntoniou for their Matching Networks implementation. I intend to use some parts for this implementation. More details at https://github.com/zergylord/oneshot and https://github.com/ludc
 
 ## Cite
 ```
