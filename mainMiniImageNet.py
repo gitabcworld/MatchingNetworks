@@ -42,7 +42,7 @@ LOG_DIR = args.log_dir + '/miniImageNetOneShot_run-batchSize_{}-fce_{}-classes_p
 # create logger
 logger = Logger(LOG_DIR)
 
-args.dataroot = '/home/aberenguel/Dataset/miniImagenet'
+#args.dataroot = '/home/aberenguel/Dataset/miniImagenet'
 dataTrain = miniImagenetOneShot.miniImagenetOneShotDataset(dataroot=args.dataroot,
                                                            type = 'train',
                                                            nEpisodes = total_train_batches*batch_size,
