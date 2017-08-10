@@ -21,7 +21,7 @@ import torch.nn.functional as F
 class MatchingNetwork(nn.Module):
     def __init__(self, keep_prob, \
                  batch_size=100, num_channels=1, learning_rate=0.001, fce=False, num_classes_per_set=5, \
-                 num_samples_per_class=1):
+                 num_samples_per_class=1, nClasses = 0, image_size = 28):
         super(MatchingNetwork, self).__init__()
 
         """
@@ -34,12 +34,15 @@ class MatchingNetwork(nn.Module):
         :param fce: Flag indicating whether to use full context embeddings (i.e. apply an LSTM on the CNN embeddings)
         :param num_classes_per_set: Integer indicating the number of classes per set
         :param num_samples_per_class: Integer indicating the number of samples per class
+        :param nClasses: total number of classes. It changes the output size of the classifier g with a final FC layer.
+        :param image_input: size of the input image. It is needed in case we want to create the last FC classification 
         """
         self.batch_size = batch_size
         self.fce = fce
-        self.g = Classifier(layer_sizes=[64, 64, 64 ,64], num_channels=num_channels )
+        self.g = Classifier(layer_size = 64, num_channels=num_channels,
+                            nClasses= nClasses, image_size = image_size )
         if fce:
-            self.lstm = BidirectionalLSTM(layer_sizes=[32], batch_size=self.batch_size, vector_dim = 64)
+            self.lstm = BidirectionalLSTM(layer_sizes=[32], batch_size=self.batch_size, vector_dim = self.g.outSize)
         self.dn = DistanceNetwork()
         self.classify = AttentionalClassify()
         self.keep_prob = keep_prob

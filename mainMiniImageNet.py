@@ -24,7 +24,7 @@ from logger import Logger
 
 # Experiment Setup
 batch_size = 10
-fce = False
+fce = True
 classes_per_set = 5
 samples_per_class = 5
 channels = 3

@@ -42,7 +42,8 @@ class OneShotBuilder:
                                          keep_prob=self.keep_prob, num_channels=channels,
                                          fce=fce,
                                          num_classes_per_set=classes_per_set,
-                                         num_samples_per_class=samples_per_class)
+                                         num_samples_per_class=samples_per_class,
+                                         nClasses = classes_per_set, image_size = 28)
         self.optimizer = 'adam'
         self.lr = 1e-03
         self.current_lr = 1e-03

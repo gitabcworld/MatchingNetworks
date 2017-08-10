@@ -33,7 +33,7 @@ def convLayer(in_planes, out_planes, useDropout = False):
     return seq
 
 class Classifier(nn.Module):
-    def __init__(self, layer_sizes, nClasses = 0, num_channels = 1, useDropout = False):
+    def __init__(self, layer_size, nClasses = 0, num_channels = 1, useDropout = False, image_size = 28):
         super(Classifier, self).__init__()
 
         """
@@ -43,19 +43,18 @@ class Classifier(nn.Module):
         :param num_channels: Number of channels of images
         :param useDroput: use Dropout with p=0.1 in each Conv block
         """
-        assert len(layer_sizes)==4, "layer_sizes should be a list of length 4"
-        self.useClassification = False
+        self.layer1 = convLayer(num_channels, layer_size, useDropout)
+        self.layer2 = convLayer(layer_size, layer_size, useDropout)
+        self.layer3 = convLayer(layer_size, layer_size, useDropout)
+        self.layer4 = convLayer(layer_size, layer_size, useDropout)
 
-        self.layer1 = convLayer(num_channels, layer_sizes[0], useDropout)
-        self.layer2 = convLayer(layer_sizes[0], layer_sizes[1], useDropout)
-        self.layer3 = convLayer(layer_sizes[1], layer_sizes[2], useDropout)
-        self.layer4 = convLayer(layer_sizes[2], layer_sizes[3], useDropout)
-
-        self.finalSize = math.floor(num_channels / (2 * 2 * 2 * 2))
-
+        self.outSize = int(math.floor(image_size / (2 * 2 * 2 * 2)))
         if nClasses>0: # We want a linear
             self.useClassification = True
-            self.layer5 = nn.Linear(self.finalSize,nClasses)
+            self.layer5 = nn.Linear(self.outSize * self.outSize * layer_size,nClasses)
+            self.outSize = nClasses
+        else:
+            self.useClassification = False
 
         self.weights_init(self.layer1)
         self.weights_init(self.layer2)
