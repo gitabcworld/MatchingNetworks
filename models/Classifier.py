@@ -14,6 +14,7 @@ import torch.nn.init as init
 from torch.autograd import Variable
 import unittest
 import numpy as np
+import math
 
 def convLayer(in_planes, out_planes, useDropout = False):
     "3x3 convolution with padding"
@@ -50,9 +51,11 @@ class Classifier(nn.Module):
         self.layer3 = convLayer(layer_sizes[1], layer_sizes[2], useDropout)
         self.layer4 = convLayer(layer_sizes[2], layer_sizes[3], useDropout)
 
+        self.finalSize = math.floor(num_channels / (2 * 2 * 2 * 2))
+
         if nClasses>0: # We want a linear
             self.useClassification = True
-            self.layer5 = nn.Linear(layer_sizes[3],nClasses)
+            self.layer5 = nn.Linear(self.finalSize,nClasses)
 
         self.weights_init(self.layer1)
         self.weights_init(self.layer2)
@@ -79,7 +82,7 @@ class Classifier(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        x = torch.squeeze(x)
+        x = x.view(x.size(0), -1)
         if self.useClassification:
             x = self.layer5(x)
         return x
