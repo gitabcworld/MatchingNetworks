@@ -1,5 +1,5 @@
 # Matching Networks for One Shot Learning 
-This repo provides a Pytorch implementation fo the Matching Networks for One Shot Learning paper.
+This repo provides a Pytorch implementation fo the [Matching Networks for One Shot Learning](http://papers.nips.cc/paper/6385-matching-networks-for-one-shot-learning.pdf) paper.
 
 ## Installation of pytorch
 The experiments needs installing [Pytorch](http://pytorch.org/)
