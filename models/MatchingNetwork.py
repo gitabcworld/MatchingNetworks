@@ -62,30 +62,38 @@ class MatchingNetwork(nn.Module):
         # produce embeddings for support set images
         encoded_images = []
         for i in np.arange(support_set_images.size(1)):
-            gen_encode = self.g(support_set_images[:,i,:,:])
+            gen_encode = self.g(support_set_images[:,i,:,:,:])
             encoded_images.append(gen_encode)
 
         # produce embeddings for target images
-        gen_encode = self.g(target_image)
-        encoded_images.append(gen_encode)
-        outputs = torch.stack(encoded_images)
+        for i in np.arange(target_image.size(1)):
+            gen_encode = self.g(target_image[:,i,:,:,:])
+            encoded_images.append(gen_encode)
+            outputs = torch.stack(encoded_images)
 
-        if self.fce:
-            outputs, hn, cn = self.lstm(outputs)
+            if self.fce:
+                outputs, hn, cn = self.lstm(outputs)
 
-        # get similarity between support set embeddings and target
-        similarities = self.dn(support_set=outputs[:-1], input_image=outputs[-1])
-        similarities = similarities.t()
+            # get similarity between support set embeddings and target
+            similarities = self.dn(support_set=outputs[:-1], input_image=outputs[-1])
+            similarities = similarities.t()
 
-        # produce predictions for target probabilities
-        preds = self.classify(similarities,support_set_y=support_set_labels_one_hot)
+            # produce predictions for target probabilities
+            preds = self.classify(similarities,support_set_y=support_set_labels_one_hot)
 
-        # calculate accuracy and crossentropy loss
-        values, indices = preds.max(1)
-        accuracy = torch.mean((indices.squeeze() == target_label).float())
-        crossentropy_loss = F.cross_entropy(preds, target_label.long())
+            # calculate accuracy and crossentropy loss
+            values, indices = preds.max(1)
+            if i == 0:
+                accuracy = torch.mean((indices.squeeze() == target_label[:,i]).float())
+                crossentropy_loss = F.cross_entropy(preds, target_label[:,i].long())
+            else:
+                accuracy = accuracy + torch.mean((indices.squeeze() == target_label[:, i]).float())
+                crossentropy_loss = accuracy + F.cross_entropy(preds, target_label[:, i].long())
 
-        return accuracy, crossentropy_loss
+            # delete the last target image encoding of encoded_images
+            encoded_images.pop()
+
+        return accuracy/target_image.size(1), crossentropy_loss/target_image.size(1)
 
 
 class MatchingNetworkTest(unittest.TestCase):

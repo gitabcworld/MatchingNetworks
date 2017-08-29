@@ -84,15 +84,15 @@ class OmniglotNShotDataset():
         self.max = np.max(self.x_train)
         self.min = np.min(self.x_train)
         print("train_shape", self.x_train.shape, "test_shape", self.x_test.shape, "val_shape", self.x_val.shape)
-        print("before_normalization", "mean", self.mean, "max", self.max, "min", self.min, "std", self.std)
+        #print("before_normalization", "mean", self.mean, "max", self.max, "min", self.min, "std", self.std)
         self.x_train = (self.x_train - self.mean) / self.std
         self.x_val = (self.x_val - self.mean) / self.std
         self.x_test = (self.x_test - self.mean) / self.std
-        self.mean = np.mean(self.x_train)
-        self.std = np.std(self.x_train)
-        self.max = np.max(self.x_train)
-        self.min = np.min(self.x_train)
-        print("after_normalization", "mean", self.mean, "max", self.max, "min", self.min, "std", self.std)
+        #self.mean = np.mean(self.x_train)
+        #self.std = np.std(self.x_train)
+        #self.max = np.max(self.x_train)
+        #self.min = np.min(self.x_train)
+        #print("after_normalization", "mean", self.mean, "max", self.max, "min", self.min, "std", self.std)
 
     def load_data_cache(self, data_pack):
         """
@@ -105,22 +105,34 @@ class OmniglotNShotDataset():
         for sample in range(1000):
             support_set_x = np.zeros((self.batch_size, n_samples, 28, 28, 1))
             support_set_y = np.zeros((self.batch_size, n_samples))
-            target_x = np.zeros((self.batch_size, 28, 28, 1), dtype=np.int)
-            target_y = np.zeros((self.batch_size,), dtype=np.int)
+            target_x = np.zeros((self.batch_size, self.samples_per_class, 28, 28, 1), dtype=np.int)
+            target_y = np.zeros((self.batch_size, self.samples_per_class), dtype=np.int)
             for i in range(self.batch_size):
-                ind = 0
                 pinds = np.random.permutation(n_samples)
                 classes = np.random.choice(data_pack.shape[0], self.classes_per_set, False)
-                x_hat_class = np.random.randint(self.classes_per_set)
+                # select 1-shot or 5-shot classes for test with repetition
+                x_hat_class = np.random.choice(classes, self.samples_per_class, True)
+                pinds_test = np.random.permutation(self.samples_per_class)
+                ind = 0
+                ind_test = 0
                 for j, cur_class in enumerate(classes):  # each class
-                    example_inds = np.random.choice(data_pack.shape[1], self.samples_per_class, False)
-                    for eind in example_inds:
+                    if cur_class in x_hat_class:
+                        # Count number of times this class is inside the meta-test
+                        n_test_samples = np.sum(cur_class == x_hat_class)
+                        example_inds = np.random.choice(data_pack.shape[1], self.samples_per_class + n_test_samples, False)
+                    else:
+                        example_inds = np.random.choice(data_pack.shape[1], self.samples_per_class, False)
+
+                    # meta-training
+                    for eind in example_inds[:self.samples_per_class]:
                         support_set_x[i, pinds[ind], :, :, :] = data_pack[cur_class][eind]
                         support_set_y[i, pinds[ind]] = j
-                        ind += 1
-                    if j == x_hat_class:
-                        target_x[i, :, :, :] = data_pack[cur_class][np.random.choice(data_pack.shape[1])]
-                        target_y[i] = j
+                        ind = ind + 1
+                    # meta-test
+                    for eind in example_inds[self.samples_per_class:]:
+                        target_x[i, pinds_test[ind_test], :, :, :] = data_pack[cur_class][eind]
+                        target_y[i, pinds_test[ind_test]] = j
+                        ind_test = ind_test + 1
 
             data_cache.append([support_set_x, support_set_y, target_x, target_y])
         return data_cache
@@ -149,11 +161,11 @@ class OmniglotNShotDataset():
         if rotate_flag:
             k = int(np.random.uniform(low=0, high=4))
             # Iterate over the sequence. Extract batches.
-            for i in np.arange(x_support_set.shape[1]):
-                x_support_set[:,i,:,:,:] = self.__rotate_batch(x_support_set[:,i,:,:,:],k)
+            for i in np.arange(x_support_set.shape[0]):
+                x_support_set[i,:,:,:,:] = self.__rotate_batch(x_support_set[i,:,:,:,:],k)
             # Rotate all the batch of the target images
-            x_target = self.__rotate_batch(x_target,k)
-
+            for i in np.arange(x_target.shape[0]):
+                x_target[i,:,:,:,:] = self.__rotate_batch(x_target[i,:,:,:,:], k)
         return x_support_set, y_support_set, x_target, y_target
 
 

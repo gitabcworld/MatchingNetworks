@@ -90,7 +90,7 @@ class OneShotBuilder:
                 size = x_support_set.size()
                 x_support_set = x_support_set.view(size[0],size[1],size[4],size[2],size[3])
                 size = x_target.size()
-                x_target = x_target.view(size[0], size[3], size[1], size[2])
+                x_target = x_target.view(size[0],size[1],size[4],size[2],size[3])
                 if self.isCudaAvailable:
                     acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
                                                          x_target.cuda(), y_target.cuda())
@@ -160,7 +160,7 @@ class OneShotBuilder:
                 size = x_support_set.size()
                 x_support_set = x_support_set.view(size[0], size[1], size[4], size[2], size[3])
                 size = x_target.size()
-                x_target = x_target.view(size[0], size[3], size[1], size[2])
+                x_target = x_target.view(size[0],size[1],size[4],size[2],size[3])
                 if self.isCudaAvailable:
                     acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
                                                          x_target.cuda(), y_target.cuda())
@@ -212,7 +212,7 @@ class OneShotBuilder:
                 size = x_support_set.size()
                 x_support_set = x_support_set.view(size[0], size[1], size[4], size[2], size[3])
                 size = x_target.size()
-                x_target = x_target.view(size[0], size[3], size[1], size[2])
+                x_target = x_target.view(size[0],size[1],size[4],size[2],size[3])
                 if self.isCudaAvailable:
                     acc, c_loss_value = self.matchingNet(x_support_set.cuda(), y_support_set_one_hot.cuda(),
                                                          x_target.cuda(), y_target.cuda())

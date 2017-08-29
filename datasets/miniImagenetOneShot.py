@@ -32,7 +32,7 @@ class miniImagenetOneShotDataset(data.Dataset):
         self.classes_per_set = classes_per_set
         self.samples_per_class = samples_per_class
         self.n_samples = self.samples_per_class * self.classes_per_set
-        self.n_samplesNShot = 1 # Samples per meta-test. In this case 1 as is OneShot.
+        self.n_samplesNShot = 5 # Samples per meta-test. In this case 1 as is OneShot.
         # Transformations to the image
         self.transform = transforms.Compose([filenameToPILImage,
                                              PiLImageResize,
