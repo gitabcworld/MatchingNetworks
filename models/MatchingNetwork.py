@@ -88,7 +88,7 @@ class MatchingNetwork(nn.Module):
                 crossentropy_loss = F.cross_entropy(preds, target_label[:,i].long())
             else:
                 accuracy = accuracy + torch.mean((indices.squeeze() == target_label[:, i]).float())
-                crossentropy_loss = accuracy + F.cross_entropy(preds, target_label[:, i].long())
+                crossentropy_loss = crossentropy_loss + F.cross_entropy(preds, target_label[:, i].long())
 
             # delete the last target image encoding of encoded_images
             encoded_images.pop()
