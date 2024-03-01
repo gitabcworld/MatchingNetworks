@@ -42,7 +42,7 @@ class OmniglotNShotDataset():
             self.x = [] # Free memory
 
             for classes in temp.keys():
-                self.x.append(np.array(temp[temp.keys()[classes]]))
+                self.x.append(np.array(temp[list(temp.keys())[classes]]))
             self.x = np.array(self.x)
             temp = [] # Free memory
             np.save(os.path.join(dataroot,'data.npy'),self.x)
@@ -105,8 +105,8 @@ class OmniglotNShotDataset():
         for sample in range(1000):
             support_set_x = np.zeros((self.batch_size, n_samples, 28, 28, 1))
             support_set_y = np.zeros((self.batch_size, n_samples))
-            target_x = np.zeros((self.batch_size, self.samples_per_class, 28, 28, 1), dtype=np.int)
-            target_y = np.zeros((self.batch_size, self.samples_per_class), dtype=np.int)
+            target_x = np.zeros((self.batch_size, self.samples_per_class, 28, 28, 1), dtype=int)
+            target_y = np.zeros((self.batch_size, self.samples_per_class), dtype=int)
             for i in range(self.batch_size):
                 pinds = np.random.permutation(n_samples)
                 classes = np.random.choice(data_pack.shape[0], self.classes_per_set, False)

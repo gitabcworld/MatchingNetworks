@@ -12,10 +12,10 @@ import torch
 import torch.nn as nn
 import unittest
 import numpy as np
-from BidirectionalLSTM import BidirectionalLSTM
-from Classifier import Classifier
-from DistanceNetwork import DistanceNetwork
-from AttentionalClassify import AttentionalClassify
+from models.BidirectionalLSTM import BidirectionalLSTM
+from models.Classifier import Classifier
+from models.DistanceNetwork import DistanceNetwork
+from models.AttentionalClassify import AttentionalClassify
 import torch.nn.functional as F
 
 class MatchingNetwork(nn.Module):
