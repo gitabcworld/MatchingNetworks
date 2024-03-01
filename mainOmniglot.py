@@ -37,7 +37,7 @@ channels = 1
 total_epochs = 2
 total_train_batches = 10
 total_val_batches = 10
-total_test_batches = 20
+total_test_batches = 25
 
 # Parse other options
 args = Options().parse()
